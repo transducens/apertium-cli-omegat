@@ -7,4 +7,4 @@ Compile and package with
 ant jar
 ```
 
-and copy build/jar/apertium-cli-omegat.jar and the contents of lib into the plugins folder of OmegaT.
+(or download the jar from the build folder) and copy build/jar/apertium-cli-omegat.jar and the contents of lib into the plugins folder of OmegaT.
