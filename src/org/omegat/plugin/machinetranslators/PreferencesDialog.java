@@ -1,14 +1,19 @@
 package org.omegat.plugin.machinetranslators;
 
 import java.awt.BorderLayout;
+import java.awt.FileDialog;
 import java.awt.FlowLayout;
+import java.awt.Frame;
 import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import org.omegat.util.Preferences;
 
@@ -18,9 +23,11 @@ import com.jgoodies.forms.layout.RowSpec;
 import com.jgoodies.forms.layout.FormSpecs;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.awt.event.ActionEvent;
 
 public class PreferencesDialog extends JDialog {
@@ -31,6 +38,7 @@ public class PreferencesDialog extends JDialog {
 	private JCheckBox showUnknownCB;
 	private JComboBox<String> langPairCombo;
 	private JTextField workingdirTB;
+	private JButton okButton;
 
 	/**
 	 * Launch the application.
@@ -43,6 +51,22 @@ public class PreferencesDialog extends JDialog {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void warn() {
+		okButton.setEnabled(false);
+		okButton.setToolTipText("Please, use the Update language pairs button and select one.");
+		langPairCombo.setModel(new DefaultComboBoxModel<String>());
+		langPairCombo.setEnabled(false);
+		langPairCombo.setToolTipText("Please, use the Update language pairs button and select one.");
+	}
+	
+	public void clearWarn()
+	{
+		okButton.setEnabled(true);
+		okButton.setToolTipText("");
+		langPairCombo.setEnabled(true);
+		langPairCombo.setToolTipText("");
 	}
 
 	/**
@@ -68,6 +92,19 @@ public class PreferencesDialog extends JDialog {
 			whereIsApertiumTB = new JTextField();
 			contentPanel.add(whereIsApertiumTB, "4, 2, fill, default");
 			whereIsApertiumTB.setColumns(10);
+			whereIsApertiumTB.getDocument().addDocumentListener(new DocumentListener() {
+				public void changedUpdate(DocumentEvent e) {
+					warn();
+				}
+
+				public void removeUpdate(DocumentEvent e) {
+					warn();
+				}
+
+				public void insertUpdate(DocumentEvent e) {
+					warn();
+				}
+			});
 		}
 		{
 			JLabel lblShowUnknown = new JLabel("Show unknown");
@@ -82,9 +119,50 @@ public class PreferencesDialog extends JDialog {
 			contentPanel.add(lblWorkingDirectory, "2, 6, right, default");
 		}
 		{
-			workingdirTB = new JTextField();
-			contentPanel.add(workingdirTB, "4, 6, fill, default");
-			workingdirTB.setColumns(10);
+			JPanel panel = new JPanel();
+			contentPanel.add(panel, "4, 6, fill, top");
+			panel.setLayout(new FormLayout(
+					new ColumnSpec[] { FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow(10)"),
+							FormSpecs.RELATED_GAP_COLSPEC, ColumnSpec.decode("default:grow"), },
+					new RowSpec[] { FormSpecs.RELATED_GAP_ROWSPEC, FormSpecs.DEFAULT_ROWSPEC, }));
+			{
+				workingdirTB = new JTextField();
+				panel.add(workingdirTB, "2, 2");
+				workingdirTB.setColumns(10);
+				workingdirTB.getDocument().addDocumentListener(new DocumentListener() {
+					public void changedUpdate(DocumentEvent e) {
+						warn();
+					}
+
+					public void removeUpdate(DocumentEvent e) {
+						warn();
+					}
+
+					public void insertUpdate(DocumentEvent e) {
+						warn();
+					}
+				});
+			}
+			{
+				JButton button = new JButton("...");
+				button.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent arg0) {
+						JFileChooser fd = new JFileChooser();
+						fd.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+						if (!"".equals(workingdirTB.getText())) {
+							fd.setCurrentDirectory(new File(workingdirTB.getText()));
+							System.out.println("PATH " + workingdirTB.getText());
+						}
+						if (fd.showOpenDialog(
+								SwingUtilities.getWindowAncestor(contentPanel)) == JFileChooser.APPROVE_OPTION) {
+							System.out.println(
+									fd.getSelectedFile().getAbsolutePath() + " " + fd.getCurrentDirectory().getPath());
+							workingdirTB.setText(fd.getSelectedFile().getAbsolutePath());
+						}
+					}
+				});
+				panel.add(button, "4, 2");
+			}
 		}
 		{
 			JLabel lblLanguagePair = new JLabel("Language pair");
@@ -108,7 +186,7 @@ public class PreferencesDialog extends JDialog {
 			buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
 			getContentPane().add(buttonPane, BorderLayout.SOUTH);
 			{
-				JButton okButton = new JButton("OK");
+				okButton = new JButton("OK");
 				okButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						save();
@@ -145,6 +223,7 @@ public class PreferencesDialog extends JDialog {
 		LocalApertiumTranslate.setWorkingDir(workingdirTB.getText());
 		List<String> langs = LocalApertiumTranslate.obtainLanguagesApertiumLocalInstallation();
 		DefaultComboBoxModel<String> model = new DefaultComboBoxModel<String>();
+		clearWarn();
 		for (String s : langs)
 			model.addElement(s);
 		langPairCombo.setModel(model);

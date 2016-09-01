@@ -28,7 +28,7 @@ public class LocalApertiumTranslate {
 		Process proc = null;
 		try {
 			proc = pb.start();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return new ArrayList<String>();
 		}
@@ -38,7 +38,10 @@ public class LocalApertiumTranslate {
 		String resultLine = null;
 		try {
 			resultLine = in.readLine();
-		} catch (IOException e) {
+			if (resultLine == null) {
+				return new ArrayList<String>();
+			}
+		} catch (Exception e) {
 			e.printStackTrace();
 			return new ArrayList<String>();
 		}
